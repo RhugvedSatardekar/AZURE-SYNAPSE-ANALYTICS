@@ -1,0 +1,17 @@
+{
+	"name": "SQL-ADLGEN2-to-D-SQL-POOL-JSON",
+	"properties": {
+		"content": {
+			"query": "SELECT    \n   JSON_VALUE(jsonContent,'$.Correlationid') As Correlationid,\n   JSON_VALUE(jsonContent,'$.Operationname') AS Operationname,\n   JSON_VALUE(jsonContent,'$.Status') AS Status,\n   JSON_VALUE(jsonContent,'$.Eventcategory') AS Eventcategory,\n   JSON_VALUE(jsonContent,'$.Level') AS Level,\n   CAST(JSON_VALUE(jsonContent,'$.Time') AS datetimeoffset) AS Time,\n   JSON_VALUE(jsonContent,'$.Subscription') AS Subscription,\n   JSON_VALUE(jsonContent,'$.Eventinitiatedby') AS Eventinitiatedby,\n   JSON_VALUE(jsonContent,'$.Resourcetype') AS Resourcetype,\n   JSON_VALUE(jsonContent,'$.Resourcegroup') AS Resourcegroup,\n   JSON_VALUE(jsonContent,'$.Resource') AS Resource\nFROM\n    OPENROWSET(\n        BULK 'https://rhugvedadlgen2.blob.core.windows.net/json/Log.json',\n        FORMAT = 'CSV',\n        FIELDQUOTE = '0x0b',\n        FIELDTERMINATOR ='0x0b',\n        ROWTERMINATOR = '0x0a'\n    )\n    WITH (\n        jsonContent varchar(MAX)\n    ) AS [rows]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

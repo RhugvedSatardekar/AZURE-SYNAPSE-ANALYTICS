@@ -1,0 +1,167 @@
+{
+	"name": "CopyPipeline_ADLGEN2-JSON",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_m1a",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "json//Log.json"
+					},
+					{
+						"name": "Destination",
+						"value": "dbo.logdata_json"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "SqlPoolSink",
+						"writeBehavior": "Insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['Correlationid']"
+								},
+								"sink": {
+									"name": "Correlation id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Operationname']"
+								},
+								"sink": {
+									"name": "Operation name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Status']"
+								},
+								"sink": {
+									"name": "Status",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Eventcategory']"
+								},
+								"sink": {
+									"name": "Event category",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Level']"
+								},
+								"sink": {
+									"name": "Level",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Time']"
+								},
+								"sink": {
+									"name": "Time",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Subscription']"
+								},
+								"sink": {
+									"name": "Subscription",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Eventinitiatedby']"
+								},
+								"sink": {
+									"name": "Event initiated by",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resourcetype']"
+								},
+								"sink": {
+									"name": "Resource type",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resourcegroup']"
+								},
+								"sink": {
+									"name": "Resource group",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['Resource']"
+								},
+								"sink": {
+									"name": "Resource",
+									"type": "String"
+								}
+							}
+						],
+						"mapComplexValuesToString": false
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_m1a",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_m1a",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2024-04-30T09:39:43Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

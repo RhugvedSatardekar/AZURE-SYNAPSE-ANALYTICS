@@ -1,0 +1,17 @@
+{
+	"name": "Serverless- SQL- pool- OPENROWSET",
+	"properties": {
+		"content": {
+			"query": "SELECT * FROM\nopenrowset(bulk 'https://rhugvedadlgen2.blob.core.windows.net/parquet/*.parquet',\nformat = 'Parquet') as [log_data_temp]",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "RhugvedDedicatedSQLPool",
+				"poolName": "RhugvedDedicatedSQLPool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

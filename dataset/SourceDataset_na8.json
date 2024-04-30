@@ -1,0 +1,45 @@
+{
+	"name": "SourceDataset_na8",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ProductID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Product_Name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Prod_Model_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Prod_Model_Name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Prod_Category_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Prod_Category_Name",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Product_Dim"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

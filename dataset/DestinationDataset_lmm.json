@@ -1,0 +1,17 @@
+{
+	"name": "DestinationDataset_lmm",
+	"properties": {
+		"annotations": [],
+		"type": "SqlPoolTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "SalesLT",
+			"table": "Product"
+		},
+		"sqlPool": {
+			"referenceName": "RhugvedDedicatedSQLPool",
+			"type": "SqlPoolReference"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

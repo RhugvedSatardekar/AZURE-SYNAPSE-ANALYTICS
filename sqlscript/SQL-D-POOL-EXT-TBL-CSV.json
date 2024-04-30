@@ -1,0 +1,17 @@
+{
+	"name": "SQL-D-POOL-EXT-TBL-CSV",
+	"properties": {
+		"content": {
+			"query": "\nCREATE DATABASE SCOPED CREDENTIAL AzureStorageCredentials\nWITH IDENTITY = 'rhugvedadlgen2'\n, SECRET = 'pyfjKPpc0XYENjJu8cNVSutHRZAwLhDNNXNBLkzqwGQgzHwk0Fz6VBpq/6vY6VjaepUcIS3+yIee+AStVs761A=='\n\nCREATE EXTERNAL DATA SOURCE log_data_csv1\nWITH(LOCATION = 'abfss://csv@rhugvedadlgen2.dfs.core.windows.net',\n    CREDENTIAL = AzureStorageCredentials,\n    TYPE = HADOOP\n)\n\nCREATE EXTERNAL FILE FORMAT TextFileFormat WITH(\n    FORMAT_TYPE= DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR= ',',\n        FIRST_ROW = 2\n    )\n)\n\nDROP EXTERNAL TABLE [logdata]\n\nCREATE EXTERNAL TABLE [logdata]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [varchar](100) NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL)\nWITH (\n LOCATION = '/Log.csv',\n    DATA_SOURCE = log_data_csv1,  \n    FILE_FORMAT = TextFileFormat\n)\n\nSELECT * FROM [logdata];",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "RhugvedDedicatedSQLPool",
+				"poolName": "RhugvedDedicatedSQLPool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

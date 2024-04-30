@@ -1,0 +1,17 @@
+{
+	"name": "SQL-D-POOL-TBL-POLYBASE",
+	"properties": {
+		"content": {
+			"query": "-- SELECT * FROM sys.database_scoped_credentials;\n\n-- SELECT * FROM sys.external_data_sources;\n\n-- SELECT * FROM sys.external_file_formats;\n\nSELECT * from [logdata_parquet]; -- External Table\n\nDROP TABLE [pool_logdata_parquet]; -- Physical Table\n\nCREATE TABLE [pool_logdata_parquet]\nWITH(\n    DISTRIBUTION = ROUND_ROBIN\n    \n)\nAS \nSELECT * \nFROM [logdata_parquet];\n\nSELECT * FROM [pool_logdata_parquet];\n\n\n--------------------------------------- copying data into alternate tables using external or ordinary table\n\nSELECT * INTO temp from [pool_logdata_parquet] where 1 = 2;\n\nINSERT INTO temp\nSELECT * from [pool_logdata_parquet];\n\nSELECT * FROM temp;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "RhugvedDedicatedSQLPool",
+				"poolName": "RhugvedDedicatedSQLPool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
