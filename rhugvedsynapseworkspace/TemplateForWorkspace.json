@@ -1,0 +1,3537 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "rhugvedsynapseworkspace"
+		},
+		"AzureSqlDatabase_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase'"
+		},
+		"rhugvedadlgen2_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'rhugvedadlgen2'"
+		},
+		"rhugvedsynapseworkspace-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'rhugvedsynapseworkspace-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:rhugvedsynapseworkspace.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"rhugvedadlgen2_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://rhugvedadlgen2.dfs.core.windows.net/"
+		},
+		"rhugvedsynapseworkspace-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://rhugvedtestgen2account.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_ADLGEN2-JSON')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_m1a",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "json//Log.json"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.logdata_json"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['Correlationid']"
+										},
+										"sink": {
+											"name": "Correlation id",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Operationname']"
+										},
+										"sink": {
+											"name": "Operation name",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Status']"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Eventcategory']"
+										},
+										"sink": {
+											"name": "Event category",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Level']"
+										},
+										"sink": {
+											"name": "Level",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Time']"
+										},
+										"sink": {
+											"name": "Time",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Subscription']"
+										},
+										"sink": {
+											"name": "Subscription",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Eventinitiatedby']"
+										},
+										"sink": {
+											"name": "Event initiated by",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Resourcetype']"
+										},
+										"sink": {
+											"name": "Resource type",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Resourcegroup']"
+										},
+										"sink": {
+											"name": "Resource group",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['Resource']"
+										},
+										"sink": {
+											"name": "Resource",
+											"type": "String"
+										}
+									}
+								],
+								"mapComplexValuesToString": false
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_m1a",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_m1a",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-30T09:39:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_m1a')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_m1a')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_ADLGEN2-to-D-SQL-POOL')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_070",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "csv//Log.csv"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.logdata"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Correlationid",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Correlation id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Operationname",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Operation name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventcategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Time",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Time",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventinitiatedby",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event initiated by",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Resourcetype",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Resource type",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Resourcegroup",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Resource group",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_070",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_070",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-30T06:05:35Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_070')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_070')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_Data_Movement_Sales_Cust')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_5gq",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.cw_items",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy_5gq",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [
+										{
+											"name": "Source",
+											"value": "dbo.@{item().source.table}"
+										},
+										{
+											"name": "Destination",
+											"value": "dbo.@{item().destination.table}"
+										}
+									],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "SqlPoolSink",
+											"writeBehavior": "Insert"
+										},
+										"enableStaging": false,
+										"translator": {
+											"value": "@item().copyActivity.translator",
+											"type": "Expression"
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SourceDataset_5gq",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_table": "@item().source.table"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DestinationDataset_5gq",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_table": "@item().destination.table"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"cw_items": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"source": {
+									"table": "Customer_Dim"
+								},
+								"destination": {
+									"table": "DimCustomer"
+								},
+								"copyActivity": {
+									"translator": {
+										"type": "TabularTranslator",
+										"mappings": [
+											{
+												"source": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												}
+											},
+											{
+												"source": {
+													"name": "CompanyName",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "CompanyName",
+													"type": "String",
+													"physicalType": "varchar"
+												}
+											},
+											{
+												"source": {
+													"name": "SalesPerson",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "SalesPerson",
+													"type": "String",
+													"physicalType": "varchar"
+												}
+											}
+										],
+										"typeConversion": true,
+										"typeConversionSettings": {
+											"allowDataTruncation": true,
+											"treatBooleanAsNumber": false
+										}
+									}
+								}
+							},
+							{
+								"source": {
+									"table": "Sales_Fact"
+								},
+								"destination": {
+									"table": "FactSales"
+								},
+								"copyActivity": {
+									"translator": {
+										"type": "TabularTranslator",
+										"mappings": [
+											{
+												"source": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "int"
+												}
+											},
+											{
+												"source": {
+													"name": "SalesOrderID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "SalesOrderID",
+													"type": "Int32",
+													"physicalType": "int"
+												}
+											},
+											{
+												"source": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												}
+											},
+											{
+												"source": {
+													"name": "OrderQty",
+													"type": "Int16",
+													"physicalType": "smallint"
+												},
+												"sink": {
+													"name": "OrderQty",
+													"type": "Int16",
+													"physicalType": "smallint"
+												}
+											},
+											{
+												"source": {
+													"name": "UnitPrice",
+													"type": "Decimal",
+													"physicalType": "money",
+													"scale": 4,
+													"precision": 19
+												},
+												"sink": {
+													"name": "UnitPrice",
+													"type": "Decimal",
+													"physicalType": "money",
+													"scale": 4,
+													"precision": 19
+												}
+											},
+											{
+												"source": {
+													"name": "OrderDate",
+													"type": "DateTime",
+													"physicalType": "datetime"
+												},
+												"sink": {
+													"name": "OrderDate",
+													"type": "DateTime",
+													"physicalType": "datetime"
+												}
+											},
+											{
+												"source": {
+													"name": "TaxAmt",
+													"type": "Decimal",
+													"physicalType": "money",
+													"scale": 4,
+													"precision": 19
+												},
+												"sink": {
+													"name": "TaxAmt",
+													"type": "Decimal",
+													"physicalType": "money",
+													"scale": 4,
+													"precision": 19
+												}
+											}
+										],
+										"typeConversion": true,
+										"typeConversionSettings": {
+											"allowDataTruncation": true,
+											"treatBooleanAsNumber": false
+										}
+									}
+								}
+							}
+						]
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-29T16:09:08Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_5gq')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_5gq')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_FactSales')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_svf",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "dbo.Sales_Fact"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.FactSales"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "SalesOrderID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "SalesOrderID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "CustomerID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "OrderQty",
+											"type": "Int16",
+											"physicalType": "smallint"
+										},
+										"sink": {
+											"name": "OrderQty",
+											"type": "Int16",
+											"physicalType": "smallint"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitPrice",
+											"type": "Decimal",
+											"physicalType": "money",
+											"scale": 4,
+											"precision": 19
+										},
+										"sink": {
+											"name": "UnitPrice",
+											"type": "Decimal",
+											"physicalType": "money",
+											"scale": 4,
+											"precision": 19
+										}
+									},
+									{
+										"source": {
+											"name": "OrderDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "OrderDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										}
+									},
+									{
+										"source": {
+											"name": "TaxAmt",
+											"type": "Decimal",
+											"physicalType": "money",
+											"scale": 4,
+											"precision": 19
+										},
+										"sink": {
+											"name": "TaxAmt",
+											"type": "Decimal",
+											"physicalType": "money",
+											"scale": 4,
+											"precision": 19
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_svf",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_svf",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-29T15:28:09Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_svf')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_svf')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_PartitionTable')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_ts7",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "csv//Log.csv"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.logdata_partition"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Correlationid",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Correlation id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Operationname",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Operation name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventcategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Time",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Time",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										}
+									},
+									{
+										"source": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventinitiatedby",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event initiated by",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_ts7",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_ts7",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-30T08:45:39Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_ts7')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_ts7')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_Products')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_lmm",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "SalesLT.Product"
+							},
+							{
+								"name": "Destination",
+								"value": "SalesLT.Product"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert",
+								"tableOption": "autoCreate"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "Name",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductNumber",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductNumber",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Color",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "Color",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "StandardCost",
+											"type": "Decimal",
+											"physicalType": "money"
+										},
+										"sink": {
+											"name": "StandardCost",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "ListPrice",
+											"type": "Decimal",
+											"physicalType": "money"
+										},
+										"sink": {
+											"name": "ListPrice",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "DiscontinuedDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "DiscontinuedDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "ThumbNailPhoto",
+											"type": "Byte[]",
+											"physicalType": "varbinary"
+										},
+										"sink": {
+											"name": "ThumbNailPhoto",
+											"type": "Byte[]",
+											"physicalType": "Byte[]"
+										}
+									},
+									{
+										"source": {
+											"name": "ThumbnailPhotoFileName",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ThumbnailPhotoFileName",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "rowguid",
+											"type": "Guid",
+											"physicalType": "uniqueidentifier"
+										},
+										"sink": {
+											"name": "rowguid",
+											"type": "Guid",
+											"physicalType": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "ModifiedDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "ModifiedDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "Size",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "Size",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Weight",
+											"type": "Decimal",
+											"physicalType": "decimal"
+										},
+										"sink": {
+											"name": "Weight",
+											"type": "Decimal",
+											"physicalType": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductCategoryID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductCategoryID",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductModelID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductModelID",
+											"type": "Int32",
+											"physicalType": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "SellStartDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "SellStartDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"name": "SellEndDate",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "SellEndDate",
+											"type": "DateTime",
+											"physicalType": "DateTime"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_lmm",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_lmm",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-28T08:47:17Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_lmm')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_lmm')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_Sales_Prod_Cust')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_kwz",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.cw_items",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy_kwz",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [
+										{
+											"name": "Source",
+											"value": "dbo.@{item().source.table}"
+										},
+										{
+											"name": "Destination",
+											"value": "dbo.@{item().destination.table}"
+										}
+									],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "SqlPoolSink",
+											"writeBehavior": "Insert",
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"value": "@item().copyActivity.translator",
+											"type": "Expression"
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SourceDataset_kwz",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_table": "@item().source.table"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DestinationDataset_kwz",
+											"type": "DatasetReference",
+											"parameters": {
+												"cw_table": "@item().destination.table"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"cw_items": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"source": {
+									"table": "Customer_Dim"
+								},
+								"destination": {
+									"table": "Customer_Dim"
+								},
+								"copyActivity": {
+									"translator": {
+										"type": "TabularTranslator",
+										"mappings": [
+											{
+												"source": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "CompanyName",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "CompanyName",
+													"type": "String",
+													"physicalType": "String"
+												}
+											},
+											{
+												"source": {
+													"name": "SalesPerson",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "SalesPerson",
+													"type": "String",
+													"physicalType": "String"
+												}
+											}
+										],
+										"typeConversion": true,
+										"typeConversionSettings": {
+											"allowDataTruncation": true,
+											"treatBooleanAsNumber": false
+										}
+									}
+								}
+							},
+							{
+								"source": {
+									"table": "Product_Dim"
+								},
+								"destination": {
+									"table": "Product_Dim"
+								},
+								"copyActivity": {
+									"translator": {
+										"type": "TabularTranslator",
+										"mappings": [
+											{
+												"source": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "Product_Name",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "Product_Name",
+													"type": "String",
+													"physicalType": "String"
+												}
+											},
+											{
+												"source": {
+													"name": "Prod_Model_ID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "Prod_Model_ID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "Prod_Model_Name",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "Prod_Model_Name",
+													"type": "String",
+													"physicalType": "String"
+												}
+											},
+											{
+												"source": {
+													"name": "Prod_Category_ID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "Prod_Category_ID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "Prod_Category_Name",
+													"type": "String",
+													"physicalType": "nvarchar"
+												},
+												"sink": {
+													"name": "Prod_Category_Name",
+													"type": "String",
+													"physicalType": "String"
+												}
+											}
+										],
+										"typeConversion": true,
+										"typeConversionSettings": {
+											"allowDataTruncation": true,
+											"treatBooleanAsNumber": false
+										}
+									}
+								}
+							},
+							{
+								"source": {
+									"table": "Sales_Fact"
+								},
+								"destination": {
+									"table": "Sales_Fact"
+								},
+								"copyActivity": {
+									"translator": {
+										"type": "TabularTranslator",
+										"mappings": [
+											{
+												"source": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "ProductID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "SalesOrderID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "SalesOrderID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "OrderQty",
+													"type": "Int16",
+													"physicalType": "smallint"
+												},
+												"sink": {
+													"name": "OrderQty",
+													"type": "Int16",
+													"physicalType": "Int16"
+												}
+											},
+											{
+												"source": {
+													"name": "UnitPrice",
+													"type": "Decimal",
+													"physicalType": "money"
+												},
+												"sink": {
+													"name": "UnitPrice",
+													"type": "Decimal",
+													"physicalType": "Decimal"
+												}
+											},
+											{
+												"source": {
+													"name": "OrderDate",
+													"type": "DateTime",
+													"physicalType": "datetime"
+												},
+												"sink": {
+													"name": "OrderDate",
+													"type": "DateTime",
+													"physicalType": "DateTime"
+												}
+											},
+											{
+												"source": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "int"
+												},
+												"sink": {
+													"name": "CustomerID",
+													"type": "Int32",
+													"physicalType": "Int32"
+												}
+											},
+											{
+												"source": {
+													"name": "TaxAmt",
+													"type": "Decimal",
+													"physicalType": "money"
+												},
+												"sink": {
+													"name": "TaxAmt",
+													"type": "Decimal",
+													"physicalType": "Decimal"
+												}
+											}
+										],
+										"typeConversion": true,
+										"typeConversionSettings": {
+											"allowDataTruncation": true,
+											"treatBooleanAsNumber": false
+										}
+									}
+								}
+							}
+						]
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-29T06:34:19Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_kwz')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_kwz')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_i1j')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_i1j",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "csv//Log.csv"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.temp"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
+								}
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Correlationid",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Correlation id",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Operationname",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Operation name",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventcategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event category",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Level",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Time",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Time",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										}
+									},
+									{
+										"source": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Subscription",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Eventinitiatedby",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Event initiated by",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_i1j",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_i1j",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-28T08:22:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_i1j')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_i1j')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CopyPipeline_na8')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_DimProduct",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "dbo.Product_Dim"
+							},
+							{
+								"name": "Destination",
+								"value": "dbo.DimProduct"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SqlPoolSink",
+								"writeBehavior": "Insert"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "Prod_Model_ID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductModelID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "Prod_Category_ID",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ProductcategoryID",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "Product_Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Prod_Model_Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductModelName",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									},
+									{
+										"source": {
+											"name": "Prod_Category_Name",
+											"type": "String",
+											"physicalType": "nvarchar"
+										},
+										"sink": {
+											"name": "ProductCategoryName",
+											"type": "String",
+											"physicalType": "varchar"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_na8",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_na8",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-04-29T16:47:17Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/SourceDataset_na8')]",
+				"[concat(variables('workspaceId'), '/datasets/DestinationDataset_na8')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_070')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "Correlation id",
+						"type": "varchar"
+					},
+					{
+						"name": "Operation name",
+						"type": "varchar"
+					},
+					{
+						"name": "Status",
+						"type": "varchar"
+					},
+					{
+						"name": "Event category",
+						"type": "varchar"
+					},
+					{
+						"name": "Level",
+						"type": "varchar"
+					},
+					{
+						"name": "Time",
+						"type": "varchar"
+					},
+					{
+						"name": "Subscription",
+						"type": "varchar"
+					},
+					{
+						"name": "Event initiated by",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource type",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource group",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "logdata"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_5gq')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"cw_table": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().cw_table",
+						"type": "Expression"
+					}
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_dql')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "Correlation id",
+						"type": "varchar"
+					},
+					{
+						"name": "Operation name",
+						"type": "varchar"
+					},
+					{
+						"name": "Status",
+						"type": "varchar"
+					},
+					{
+						"name": "Event category",
+						"type": "varchar"
+					},
+					{
+						"name": "Level",
+						"type": "varchar"
+					},
+					{
+						"name": "Time",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Subscription",
+						"type": "varchar"
+					},
+					{
+						"name": "Event initiated by",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource type",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource group",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "temp"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_i1j')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "Correlation id",
+						"type": "varchar"
+					},
+					{
+						"name": "Operation name",
+						"type": "varchar"
+					},
+					{
+						"name": "Status",
+						"type": "varchar"
+					},
+					{
+						"name": "Event category",
+						"type": "varchar"
+					},
+					{
+						"name": "Level",
+						"type": "varchar"
+					},
+					{
+						"name": "Time",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Subscription",
+						"type": "varchar"
+					},
+					{
+						"name": "Event initiated by",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "temp"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_kwz')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"cw_table": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().cw_table",
+						"type": "Expression"
+					}
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_lmm')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "Product"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_m1a')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "Correlation id",
+						"type": "varchar"
+					},
+					{
+						"name": "Operation name",
+						"type": "varchar"
+					},
+					{
+						"name": "Status",
+						"type": "varchar"
+					},
+					{
+						"name": "Event category",
+						"type": "varchar"
+					},
+					{
+						"name": "Level",
+						"type": "varchar"
+					},
+					{
+						"name": "Time",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Subscription",
+						"type": "varchar"
+					},
+					{
+						"name": "Event initiated by",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource type",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource group",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "logdata_json"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_na8')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "ProductSK",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductModelID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductcategoryID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductName",
+						"type": "varchar"
+					},
+					{
+						"name": "ProductModelName",
+						"type": "varchar"
+					},
+					{
+						"name": "ProductCategoryName",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "DimProduct"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_svf')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "ProductID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SalesOrderID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "OrderQty",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "UnitPrice",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "OrderDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "TaxAmt",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "FactSales"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DestinationDataset_ts7')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlPoolTable",
+				"schema": [
+					{
+						"name": "Correlation id",
+						"type": "varchar"
+					},
+					{
+						"name": "Operation name",
+						"type": "varchar"
+					},
+					{
+						"name": "Status",
+						"type": "varchar"
+					},
+					{
+						"name": "Event category",
+						"type": "varchar"
+					},
+					{
+						"name": "Level",
+						"type": "varchar"
+					},
+					{
+						"name": "Time",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Subscription",
+						"type": "varchar"
+					},
+					{
+						"name": "Event initiated by",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource type",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource group",
+						"type": "varchar"
+					},
+					{
+						"name": "Resource",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "logdata_partition1"
+				},
+				"sqlPool": {
+					"referenceName": "RhugvedDedicatedSQLPool",
+					"type": "SqlPoolReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/sqlPools/RhugvedDedicatedSQLPool')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_070')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "rhugvedadlgen2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Log.csv",
+						"fileSystem": "csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Id",
+						"type": "String"
+					},
+					{
+						"name": "Correlationid",
+						"type": "String"
+					},
+					{
+						"name": "Operationname",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Eventcategory",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Time",
+						"type": "String"
+					},
+					{
+						"name": "Subscription",
+						"type": "String"
+					},
+					{
+						"name": "Eventinitiatedby",
+						"type": "String"
+					},
+					{
+						"name": "Resourcetype",
+						"type": "String"
+					},
+					{
+						"name": "Resourcegroup",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/rhugvedadlgen2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_5gq')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"cw_table": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().cw_table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_dql')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "rhugvedadlgen2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Log.csv",
+						"fileSystem": "csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Id",
+						"type": "String"
+					},
+					{
+						"name": "Correlationid",
+						"type": "String"
+					},
+					{
+						"name": "Operationname",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Eventcategory",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Time",
+						"type": "String"
+					},
+					{
+						"name": "Subscription",
+						"type": "String"
+					},
+					{
+						"name": "Eventinitiatedby",
+						"type": "String"
+					},
+					{
+						"name": "Resourcetype",
+						"type": "String"
+					},
+					{
+						"name": "Resourcegroup",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/rhugvedadlgen2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_i1j')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "rhugvedadlgen2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Log.csv",
+						"fileSystem": "csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Id",
+						"type": "String"
+					},
+					{
+						"name": "Correlationid",
+						"type": "String"
+					},
+					{
+						"name": "Operationname",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Eventcategory",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Time",
+						"type": "String"
+					},
+					{
+						"name": "Subscription",
+						"type": "String"
+					},
+					{
+						"name": "Eventinitiatedby",
+						"type": "String"
+					},
+					{
+						"name": "Resourcetype",
+						"type": "String"
+					},
+					{
+						"name": "Resourcegroup",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/rhugvedadlgen2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_kwz')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"cw_table": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().cw_table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_lmm')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ProductID",
+						"type": "int",
+						"precision": 10,
+						"scale": 0
+					},
+					{
+						"name": "Name",
+						"type": "nvarchar",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "ProductNumber",
+						"type": "nvarchar",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "Color",
+						"type": "nvarchar",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "StandardCost",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "ListPrice",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "DiscontinuedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "ThumbNailPhoto",
+						"type": "varbinary",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "ThumbnailPhotoFileName",
+						"type": "nvarchar",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "rowguid",
+						"type": "uniqueidentifier",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Size",
+						"type": "nvarchar",
+						"precision": 0,
+						"scale": 0
+					},
+					{
+						"name": "Weight",
+						"type": "decimal",
+						"precision": 8,
+						"scale": 2
+					},
+					{
+						"name": "ProductCategoryID",
+						"type": "int",
+						"precision": 10,
+						"scale": 0
+					},
+					{
+						"name": "ProductModelID",
+						"type": "int",
+						"precision": 10,
+						"scale": 0
+					},
+					{
+						"name": "SellStartDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "SellEndDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "Product"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_m1a')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "rhugvedadlgen2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Log.json",
+						"fileSystem": "json"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"Correlationid": {
+							"type": "string"
+						},
+						"Operationname": {
+							"type": "string"
+						},
+						"Status": {
+							"type": "string"
+						},
+						"Eventcategory": {
+							"type": "string"
+						},
+						"Level": {
+							"type": "string"
+						},
+						"Time": {
+							"type": "string"
+						},
+						"Subscription": {
+							"type": "string"
+						},
+						"Eventinitiatedby": {
+							"type": "string"
+						},
+						"Resourcetype": {
+							"type": "string"
+						},
+						"Resourcegroup": {
+							"type": "string"
+						},
+						"Resource": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/rhugvedadlgen2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_na8')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ProductID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Product_Name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Prod_Model_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Prod_Model_Name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Prod_Category_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Prod_Category_Name",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Product_Dim"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_svf')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ProductID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SalesOrderID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "OrderQty",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "UnitPrice",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "OrderDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "TaxAmt",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Sales_Fact"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SourceDataset_ts7')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "rhugvedadlgen2",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Log.csv",
+						"fileSystem": "csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Id",
+						"type": "String"
+					},
+					{
+						"name": "Correlationid",
+						"type": "String"
+					},
+					{
+						"name": "Operationname",
+						"type": "String"
+					},
+					{
+						"name": "Status",
+						"type": "String"
+					},
+					{
+						"name": "Eventcategory",
+						"type": "String"
+					},
+					{
+						"name": "Level",
+						"type": "String"
+					},
+					{
+						"name": "Time",
+						"type": "String"
+					},
+					{
+						"name": "Subscription",
+						"type": "String"
+					},
+					{
+						"name": "Eventinitiatedby",
+						"type": "String"
+					},
+					{
+						"name": "Resourcetype",
+						"type": "String"
+					},
+					{
+						"name": "Resourcegroup",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/rhugvedadlgen2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AzureSqlDatabase')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/rhugvedadlgen2')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('rhugvedadlgen2_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('rhugvedadlgen2_accountKey')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/rhugvedsynapseworkspace-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('rhugvedsynapseworkspace-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/rhugvedsynapseworkspace-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('rhugvedsynapseworkspace-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 2')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT TOP (100) *\n,[Name]\n,[ProductNumber]\n,[Color]\n,[StandardCost]\n,[ListPrice]\n,[DiscontinuedDate]\n,[ThumbNailPhoto]\n,[ThumbnailPhotoFileName]\n,[rowguid]\n,[ModifiedDate]\n,[Size]\n,[Weight]\n,[ProductCategoryID]\n,[ProductModelID]\n,[SellStartDate]\n,[SellEndDate]\n FROM [SalesLT].[Product]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-ADLGEN2-to-D-SQL-POOL-JSON')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT    \n   JSON_VALUE(jsonContent,'$.Correlationid') As Correlationid,\n   JSON_VALUE(jsonContent,'$.Operationname') AS Operationname,\n   JSON_VALUE(jsonContent,'$.Status') AS Status,\n   JSON_VALUE(jsonContent,'$.Eventcategory') AS Eventcategory,\n   JSON_VALUE(jsonContent,'$.Level') AS Level,\n   CAST(JSON_VALUE(jsonContent,'$.Time') AS datetimeoffset) AS Time,\n   JSON_VALUE(jsonContent,'$.Subscription') AS Subscription,\n   JSON_VALUE(jsonContent,'$.Eventinitiatedby') AS Eventinitiatedby,\n   JSON_VALUE(jsonContent,'$.Resourcetype') AS Resourcetype,\n   JSON_VALUE(jsonContent,'$.Resourcegroup') AS Resourcegroup,\n   JSON_VALUE(jsonContent,'$.Resource') AS Resource\nFROM\n    OPENROWSET(\n        BULK 'https://rhugvedadlgen2.blob.core.windows.net/json/Log.json',\n        FORMAT = 'CSV',\n        FIELDQUOTE = '0x0b',\n        FIELDTERMINATOR ='0x0b',\n        ROWTERMINATOR = '0x0a'\n    )\n    WITH (\n        jsonContent varchar(MAX)\n    ) AS [rows]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-D-POOL-EXT-TBL-CSV')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\nCREATE DATABASE SCOPED CREDENTIAL AzureStorageCredentials\nWITH IDENTITY = 'rhugvedadlgen2'\n, SECRET = 'pyfjKPpc0XYENjJu8cNVSutHRZAwLhDNNXNBLkzqwGQgzHwk0Fz6VBpq/6vY6VjaepUcIS3+yIee+AStVs761A=='\n\nCREATE EXTERNAL DATA SOURCE log_data_csv1\nWITH(LOCATION = 'abfss://csv@rhugvedadlgen2.dfs.core.windows.net',\n    CREDENTIAL = AzureStorageCredentials,\n    TYPE = HADOOP\n)\n\nCREATE EXTERNAL FILE FORMAT TextFileFormat WITH(\n    FORMAT_TYPE= DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR= ',',\n        FIRST_ROW = 2\n    )\n)\n\nDROP EXTERNAL TABLE [logdata]\n\nCREATE EXTERNAL TABLE [logdata]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [varchar](100) NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL)\nWITH (\n LOCATION = '/Log.csv',\n    DATA_SOURCE = log_data_csv1,  \n    FILE_FORMAT = TextFileFormat\n)\n\nSELECT * FROM [logdata];",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-D-POOL-EXT-TBL-PQT')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'Password@123'\n\nCREATE DATABASE SCOPED CREDENTIAL SasToken\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE',\nSECRET = 'sv=2022-11-02&ss=b&srt=sco&sp=rwx&se=2024-05-04T01:36:35Z&st=2024-04-26T17:36:35Z&spr=https&sig=fSeIBX9VOx0ZT4pTbfqfUO1shl1Ro%2Fe3bqZ4r9Ra7JM%3D'\n\nCREATE EXTERNAL DATA SOURCE log_data_parquet\nWITH(LOCATION = 'https://rhugvedadlgen2.blob.core.windows.net/parquet',\n    CREDENTIAL = SasToken\n)\n\nCREATE EXTERNAL FILE FORMAT parquetfile  \nWITH (  \n    FORMAT_TYPE = PARQUET,  \n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'  \n);\n\nDROP EXTERNAL TABLE [logdata_parquet]\n\nCREATE EXTERNAL TABLE [logdata_p     arquet]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [datetime] NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL)\nWITH (\n LOCATION = '/log.parquet',\n    DATA_SOURCE = log_data_parquet,  \n    FILE_FORMAT = parquetfile\n)\n\nSELECT * FROM [logdata_parquet];",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-D-POOL-TBL-COPY-CSV')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- used to copy the csv file into the Dedicated sql pool Data Ware house in the form the ordinary/physical table\n\nCREATE TABLE [pool_copy_csv]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [DATETIME] NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL);\n\nSELECT * FROM [pool_copy_csv];\n\nCOPY INTO [pool_copy_csv] FROM 'https://rhugvedadlgen2.blob.core.windows.net/csv/Log.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    CREDENTIAL = (IDENTITY = 'STORAGE ACCOUNT KEY', SECRET = 'pyfjKPpc0XYENjJu8cNVSutHRZAwLhDNNXNBLkzqwGQgzHwk0Fz6VBpq/6vY6VjaepUcIS3+yIee+AStVs761A=='),\n\tFIRSTROW = 1\n)\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-D-POOL-TBL-COPY-PARQUET')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE TABLE [pool_logdata_parquet]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [datetime] NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL\n)\n\nCOPY INTO [pool_logdata_parquet] FROM 'https://rhugvedadlgen2.blob.core.windows.net/parquet/log.parquet'\nWITH (\n    FILE_TYPE = 'PARQUET',\n    CREDENTIAL = (IDENTITY = 'Storage Account Key', SECRET = 'jkZCwiHIT/gshy1b2FB4i1zErkei82hC//wYfUc1zWxhM3R9zy59KMh0D3LkDTT10rHSpyOZU7YS+AStgwuXzw==')\n)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL-D-POOL-TBL-POLYBASE')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- SELECT * FROM sys.database_scoped_credentials;\n\n-- SELECT * FROM sys.external_data_sources;\n\n-- SELECT * FROM sys.external_file_formats;\n\nSELECT * from [logdata_parquet]; -- External Table\n\nDROP TABLE [pool_logdata_parquet]; -- Physical Table\n\nCREATE TABLE [pool_logdata_parquet]\nWITH(\n    DISTRIBUTION = ROUND_ROBIN\n    \n)\nAS \nSELECT * \nFROM [logdata_parquet];\n\nSELECT * FROM [pool_logdata_parquet];\n\n\n--------------------------------------- copying data into alternate tables using external or ordinary table\n\nSELECT * INTO temp from [pool_logdata_parquet] where 1 = 2;\n\nINSERT INTO temp\nSELECT * from [pool_logdata_parquet];\n\nSELECT * FROM temp;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Serverless- SQL- pool- OPENROWSET')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "SELECT * FROM\nopenrowset(bulk 'https://rhugvedadlgen2.blob.core.windows.net/parquet/*.parquet',\nformat = 'Parquet') as [log_data_temp]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "RhugvedDedicatedSQLPool",
+						"poolName": "RhugvedDedicatedSQLPool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Serverless-External-CSV')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE DATABASE [appdb1];\n\nCREATE MASTER KEY ENCRYPTION BY PASSWORD = 'Password@123'\n\nCREATE DATABASE SCOPED CREDENTIAL SasToken\nWITH IDENTITY = 'SHARED ACCESS SIGNATURE',\nSECRET = 'sv=2022-11-02&ss=b&srt=sco&sp=rwlx&se=2024-04-26T22:26:00Z&st=2024-04-26T14:26:00Z&spr=https&sig=XqkVh83TEeZsy0OfRPc1W9%2FvLEuh2qdxJqgMa%2FKw%2B7I%3D'\n\nCREATE EXTERNAL DATA SOURCE log_data\nWITH(LOCATION = 'https://rhugvedadlgen2.blob.core.windows.net/csv',\n    CREDENTIAL = SasToken\n)\n\nCREATE EXTERNAL FILE FORMAT TextFileFormat WITH(\n    FORMAT_TYPE= DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n        FIELD_TERMINATOR= ',',\n        FIRST_ROW = 2\n    )\n)\n\nCREATE EXTERNAL TABLE [logdata1]\n(\n    [Correlation id] [varchar](200) NULL,\n\t[Operation name] [varchar](200) NULL,\n\t[Status] [varchar](100) NULL,\n\t[Event category] [varchar](100) NULL,\n\t[Level] [varchar](100) NULL,\n\t[Time] [DATE] NULL,\n\t[Subscription] [varchar](200) NULL,\n\t[Event initiated by] [varchar](1000) NULL,\n\t[Resource type] [varchar](1000) NULL,\n\t[Resource group] [varchar](1000) NULL,\n    [Resource] [varchar](2000) NULL)\nWITH (\n LOCATION = '/Log.csv',\n    DATA_SOURCE = log_data,  \n    FILE_FORMAT = TextFileFormat\n)\n\nSELECT * from [logdata1];\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "appdb1",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/01-Basic')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "RhugvedSpark",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "710748ec-eef8-46d9-9aff-feb374ee7ef7"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/60bb05d6-1e3e-4b99-b5e1-20aaa5dd54f3/resourceGroups/DATA-GRP/providers/Microsoft.Synapse/workspaces/rhugvedsynapseworkspace/bigDataPools/RhugvedSpark",
+						"name": "RhugvedSpark",
+						"type": "Spark",
+						"endpoint": "https://rhugvedsynapseworkspace.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/RhugvedSpark",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.4",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RhugvedSpark')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": false,
+					"maxNodeCount": 0,
+					"minNodeCount": 0
+				},
+				"nodeCount": 3,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.4",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RhugvedDedicatedSQLPool')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"collation": "SQL_Latin1_General_CP1_CI_AS",
+				"maxSizeBytes": 263882790666240,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		}
+	]
+}
