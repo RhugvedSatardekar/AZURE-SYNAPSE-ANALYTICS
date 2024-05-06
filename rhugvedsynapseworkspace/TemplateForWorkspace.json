@@ -3452,18 +3452,18 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "b99c2e10-cdad-4543-866a-c130a69b8f09"
+						"spark.autotune.trackingId": "2895ceba-17f1-4327-a0af-6bb2ab430cdb"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
 					"enableDebugMode": false,
 					"kernelspec": {
-						"name": "synapse_spark",
-						"display_name": "scala"
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
 					},
 					"language_info": {
-						"name": "scala"
+						"name": "python"
 					},
 					"a365ComputeOptions": {
 						"id": "/subscriptions/60bb05d6-1e3e-4b99-b5e1-20aaa5dd54f3/resourceGroups/DATA-GRP/providers/Microsoft.Synapse/workspaces/rhugvedsynapseworkspace/bigDataPools/RhugvedSpark",
@@ -3485,16 +3485,35 @@
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {},
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
 						"source": [
-							"val datValues= Array(10,20,30)\r\n",
-							"val dataset = sc.parallelize(datValues)\r\n",
-							"\r\n",
-							"val m = dataset.max\r\n",
-							"m"
+							""
 						],
 						"outputs": [],
 						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"collapsed": false
+						},
+						"source": [
+							"courses = [(1,'AZ-900',10.99),(2,'DP-900',11.99),(3,'DO-900',17.99)]\r\n",
+							"df = spark.createDataFrame(courses,['ID','Name','Price'])\r\n",
+							"display(df) "
+						],
+						"outputs": [],
+						"execution_count": 2
 					}
 				]
 			},
