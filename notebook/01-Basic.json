@@ -1,0 +1,61 @@
+{
+	"name": "01-Basic",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "RhugvedSpark",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "true",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "876b2ca8-145d-46c7-8e54-8649cfc76205"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/60bb05d6-1e3e-4b99-b5e1-20aaa5dd54f3/resourceGroups/DATA-GRP/providers/Microsoft.Synapse/workspaces/rhugvedsynapseworkspace/bigDataPools/RhugvedSpark",
+				"name": "RhugvedSpark",
+				"type": "Spark",
+				"endpoint": "https://rhugvedsynapseworkspace.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/RhugvedSpark",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.4",
+				"nodeCount": 3,
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"df = spark.read.load('abfss://parquet@rhugvedadlgen2.dfs.core.windows.net/Log.parquet',format='parquet')\r\n",
+					"display(df)"
+				],
+				"execution_count": 2
+			}
+		]
+	}
+}
