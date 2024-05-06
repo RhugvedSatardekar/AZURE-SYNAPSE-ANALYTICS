@@ -3449,10 +3449,10 @@
 					"executorCores": 4,
 					"numExecutors": 2,
 					"conf": {
-						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "2895ceba-17f1-4327-a0af-6bb2ab430cdb"
+						"spark.autotune.trackingId": "fb7b78b0-380b-40c6-ab8e-c162060ec582"
 					}
 				},
 				"metadata": {
@@ -3476,8 +3476,8 @@
 						},
 						"sparkVersion": "3.4",
 						"nodeCount": 3,
-						"cores": 4,
-						"memory": 28,
+						"cores": 8,
+						"memory": 56,
 						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
@@ -3485,32 +3485,10 @@
 				"cells": [
 					{
 						"cell_type": "code",
-						"metadata": {
-							"jupyter": {
-								"source_hidden": false,
-								"outputs_hidden": false
-							},
-							"nteract": {
-								"transient": {
-									"deleting": false
-								}
-							}
-						},
+						"metadata": {},
 						"source": [
-							""
-						],
-						"outputs": [],
-						"execution_count": null
-					},
-					{
-						"cell_type": "code",
-						"metadata": {
-							"collapsed": false
-						},
-						"source": [
-							"courses = [(1,'AZ-900',10.99),(2,'DP-900',11.99),(3,'DO-900',17.99)]\r\n",
-							"df = spark.createDataFrame(courses,['ID','Name','Price'])\r\n",
-							"display(df) "
+							"df = spark.read.load('abfss://parquet@rhugvedadlgen2.dfs.core.windows.net/Log.parquet',format='parquet')\r\n",
+							"display(df)"
 						],
 						"outputs": [],
 						"execution_count": 2
@@ -3534,7 +3512,7 @@
 					"minNodeCount": 0
 				},
 				"nodeCount": 3,
-				"nodeSize": "Small",
+				"nodeSize": "Medium",
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "3.4",
 				"isComputeIsolationEnabled": false,
