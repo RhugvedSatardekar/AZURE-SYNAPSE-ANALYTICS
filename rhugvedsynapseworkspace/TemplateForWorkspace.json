@@ -3452,18 +3452,18 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "710748ec-eef8-46d9-9aff-feb374ee7ef7"
+						"spark.autotune.trackingId": "b99c2e10-cdad-4543-866a-c130a69b8f09"
 					}
 				},
 				"metadata": {
 					"saveOutput": true,
 					"enableDebugMode": false,
 					"kernelspec": {
-						"name": "synapse_pyspark",
-						"display_name": "python"
+						"name": "synapse_spark",
+						"display_name": "scala"
 					},
 					"language_info": {
-						"name": "python"
+						"name": "scala"
 					},
 					"a365ComputeOptions": {
 						"id": "/subscriptions/60bb05d6-1e3e-4b99-b5e1-20aaa5dd54f3/resourceGroups/DATA-GRP/providers/Microsoft.Synapse/workspaces/rhugvedsynapseworkspace/bigDataPools/RhugvedSpark",
@@ -3487,7 +3487,11 @@
 						"cell_type": "code",
 						"metadata": {},
 						"source": [
-							""
+							"val datValues= Array(10,20,30)\r\n",
+							"val dataset = sc.parallelize(datValues)\r\n",
+							"\r\n",
+							"val m = dataset.max\r\n",
+							"m"
 						],
 						"outputs": [],
 						"execution_count": null
